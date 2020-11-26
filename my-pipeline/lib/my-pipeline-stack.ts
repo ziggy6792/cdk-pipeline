@@ -1,8 +1,50 @@
-import { Stack, StackProps, Construct, SecretValue } from '@aws-cdk/core';
+import * as cdk from '@aws-cdk/core';
+import * as lambda from '@aws-cdk/aws-lambda';
+import { Construct, Stack, StackProps, Stage, StageProps, SecretValue } from '@aws-cdk/core';
 import { CdkPipeline, SimpleSynthAction } from '@aws-cdk/pipelines';
 
 import * as codepipeline from '@aws-cdk/aws-codepipeline';
 import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions';
+
+// Your application
+// May consist of one or more Stacks
+//
+// export class MyApplication extends Stage {
+//   public readonly handler: lambda.Function;
+//   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+//     super(scope, id);
+
+//     this.handler = new lambda.Function(this, 'TodoHandler', {
+//       code: lambda.Code.fromAsset('lambda'),
+//       handler: 'todoHandler.handler',
+//       runtime: lambda.Runtime.NODEJS_12_X,
+//       environment: {},
+//     });
+//   }
+// }
+
+export class LambdaStack extends Stack {
+  public readonly handler: lambda.Function;
+
+  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id);
+
+    this.handler = new lambda.Function(this, 'TodoHandler', {
+      code: lambda.Code.fromAsset('lambda'),
+      handler: 'todoHandler.handler',
+      runtime: lambda.Runtime.NODEJS_12_X,
+      environment: {},
+    });
+  }
+}
+
+export class MyApplication extends Stage {
+  constructor(scope: Construct, id: string, props?: StageProps) {
+    super(scope, id, props);
+
+    const dbStack = new LambdaStack(this, 'Lambda');
+  }
+}
 
 export class MyPipelineStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -34,5 +76,27 @@ export class MyPipelineStack extends Stack {
         buildCommand: 'npm run build',
       }),
     });
+
+    // Do this as many times as necessary with any account and region
+    // Account and region may be different from the pipeline's.
+    pipeline.addApplicationStage(
+      new MyApplication(this, 'Dev', {
+        env: {
+          account: '694710432912',
+          region: 'ap-southeast-1',
+        },
+      })
+    );
+
+    // Do this as many times as necessary with any account and region
+    // Account and region may be different from the pipeline's.
+    pipeline.addApplicationStage(
+      new MyApplication(this, 'Prod', {
+        env: {
+          account: '694710432912',
+          region: 'ap-southeast-1',
+        },
+      })
+    );
   }
 }
