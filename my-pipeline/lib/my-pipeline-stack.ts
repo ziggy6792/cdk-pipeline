@@ -5,6 +5,7 @@ import { CdkPipeline, SimpleSynthAction } from '@aws-cdk/pipelines';
 
 import * as codepipeline from '@aws-cdk/aws-codepipeline';
 import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions';
+import path = require('path');
 
 // Your application
 // May consist of one or more Stacks
@@ -30,7 +31,7 @@ export class LambdaStack extends Stack {
     super(scope, id);
 
     this.handler = new lambda.Function(this, 'TodoHandler', {
-      code: lambda.Code.fromAsset('lambda'),
+      code: lambda.Code.fromAsset(path.resolve(__dirname, 'lambda')),
       handler: 'todoHandler.handler',
       runtime: lambda.Runtime.NODEJS_12_X,
       environment: {},
